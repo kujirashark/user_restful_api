@@ -1,0 +1,2 @@
+2019-10-27 15:48:34,018 - ERROR - Model:db_user_mgr.py - Fun:get_user_by_name - Message:(1146, "Table 'user_api.task_group' doesn't exist") - Line:318
+2019-10-27 15:48:34,018 - ERROR - Model:interface_login.py - Fun:post - Message:'responseCode' object has no attribute 'LOGIN_IS_FAILD' - Line:61
