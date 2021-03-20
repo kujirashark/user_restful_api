@@ -6,7 +6,7 @@ Flask-Cors==3.0.8
 Flask-JWT==0.3.2
 Flask-RESTful==0.3.7
 itsdangerous==1.1.0
-Jinja2==2.10.3
+Jinja2==2.11.3
 MarkupSafe==1.1.1
 PyJWT==1.4.2
 PyMySQL==0.9.3
