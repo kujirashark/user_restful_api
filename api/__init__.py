@@ -26,8 +26,10 @@ def create_app(config_name):
     config[config_name].init_app(app)
     ###初始化数据库
     # db.init_app(app)
-    # 返回数据中response为中文
+    # 返回数据中response为中文（Flask>=2.3 需通过 json provider 设置，JSON_AS_ASCII 已失效）
     app.config['JSON_AS_ASCII'] = False
+    if hasattr(app, 'json'):
+        app.json.ensure_ascii = False
 
 
     ###初始化日志###

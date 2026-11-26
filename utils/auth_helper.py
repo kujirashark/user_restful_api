@@ -67,7 +67,8 @@ class Auth(object):
             ###十分钟无访问token过期
             # payload = jwt.decode(auth_token, app.config.get('SECRET_KEY'), leeway=datetime.timedelta(seconds=10))
             # 取消过期时间验证
-            payload = jwt.decode(auth_token, api.Config.SECRET_KEY, options={'verify_exp': False})
+            payload = jwt.decode(auth_token, api.Config.SECRET_KEY, algorithms=['HS256'],
+                                 options={'verify_exp': False})
             if ('data' in payload and 'user_key' in payload['data']):
                 return payload
             else:
@@ -104,7 +105,8 @@ class Auth(object):
             token = cls._Auth__encode_auth_token(cls, user_data.get('id'), login_time)
             user_data.pop('pass_word')
             dict_user = user_data
-            dict_user['token'] = token.decode()
+            # PyJWT>=2 返回 str，旧版返回 bytes，做兼容处理
+            dict_user['token'] = token.decode() if isinstance(token, bytes) else token
             return dict_user
         else:
             return response_code.LOGIN_IS_FAILD
