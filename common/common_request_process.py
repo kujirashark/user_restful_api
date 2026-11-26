@@ -10,7 +10,6 @@
 """
 
 import json
-from json import JSONDecodeError
 
 from common.common_api_version import apiVersion
 from common.common_response_code import response_code
@@ -74,15 +73,15 @@ class requestProcess(object):
         :return:
         """
         try:
-            request_data = request.data
-            req_str = request_data.decode()
-            if req_str == '':
-                return {}
-            data = json.loads(req_str)
-            if isinstance(data, list):
+            # JSON 请求体优先（body 为空或非法时返回 None，不抛异常）
+            request_data = request.get_json(force=True, silent=True)
+            if isinstance(request_data, list):
                 return False
+            data = dict(request_data) if isinstance(request_data, dict) else {}
+            # 合并 URL query / 表单参数，兼容非 JSON 提交方式
+            data.update(request.values.to_dict())
             return data
-        except JSONDecodeError as e:
+        except Exception as e:
             lg.error(e)
             return False
 
