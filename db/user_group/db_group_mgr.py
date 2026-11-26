@@ -8,6 +8,8 @@
 @csdn https://blog.csdn.net/qq_33196814
 @file_description：
 """
+import ast
+
 from common.common_time import get_system_datetime
 from config import configuration
 from db.base import DbBase
@@ -16,6 +18,14 @@ from db.connection_pool import MysqlConn
 from db.user.db_user_mgr import user_mgr
 from utils.log_helper import lg
 from utils.status_code import response_code
+
+
+def _ids(value):
+    """从请求传入的 id 列表（或其 str() 形式）中提取整数 id。任何非整数都会抛出 ValueError，
+    确保请求文本不会进入这些 id 所拼接的 SQL 条件中。"""
+    if isinstance(value, str):
+        value = ast.literal_eval(value)
+    return [int(v) for v in value]
 
 
 class DBGroupMgr(DbBase):
@@ -108,10 +118,10 @@ class DBGroupMgr(DbBase):
         """
         conn = MysqlConn()
         try:
-            condition = 'name="%s"' % group_name
+            condition = 'name=%s'
             db_name = configuration.get_database_name()
             sql = self.create_select_sql(db_name, 'user_group', 'id', condition=condition)
-            return self.execute_fetch_one(conn, sql)
+            return self.execute_fetch_one(conn, sql, (group_name,))
         except Exception as e:
             lg.error(e)
             return response_code.GET_DATA_FAIL
@@ -130,9 +140,9 @@ class DBGroupMgr(DbBase):
             db_name = configuration.get_database_name()
             table_name = 'user_group'
             filed = 'name'
-            condition = "name = '%s'" % group_name
+            condition = "name = %s"
             is_exist_sql = self.create_select_sql(db_name, table_name, filed, condition)
-            res = self.execute_fetch_one(db_conn, is_exist_sql)
+            res = self.execute_fetch_one(db_conn, is_exist_sql, (group_name,))
             if res:
                 return response_code.RECORD_EXIST
             fields = '(name,description,create_time)'
@@ -145,7 +155,7 @@ class DBGroupMgr(DbBase):
             new_group_id = new_group.get('id')
             # 添加用户组的角色
             group_role_fields = '(group_id,role_id)'
-            for role_id in eval(str(role_ids)):
+            for role_id in _ids(role_ids):
                 group_role_value_tuple = (new_group_id, role_id)
                 insert_user_sql = self.create_insert_sql(db_name, "user_group_role", group_role_fields,
                                                          group_role_value_tuple)
@@ -170,7 +180,7 @@ class DBGroupMgr(DbBase):
             # db_conn.cur.execute('SET FOREIGN_KEY_CHECKS = 0;')
             # db_conn.conn.commit()
             # 删除用户组角色
-            for role_id in eval(str(role_ids)):
+            for role_id in _ids(role_ids):
                 condition = "group_id=%s and role_id=%s" % (group_id, role_id)
                 delete_group_role_sql = self.create_delete_sql(db_name, "user_group_role", condition)
                 self.delete_exec(db_conn, delete_group_role_sql)
@@ -221,7 +231,7 @@ class DBGroupMgr(DbBase):
 
             # 添加用户组的角色
             group_role_fields = '(group_id,role_id)'
-            for role_id in eval(str(group.get('role_ids'))):
+            for role_id in _ids(group.get('role_ids')):
                 group_role_value_tuple = (group.get('id'), role_id)
                 insert_group_role_sql = self.create_insert_sql(db_name, "user_group_role", group_role_fields,
                                                                group_role_value_tuple)
@@ -244,7 +254,7 @@ class DBGroupMgr(DbBase):
         try:
             db_name = configuration.get_database_name()
             table_name = 'user_user_group'
-            for user_id in eval(user_ids):
+            for user_id in _ids(user_ids):
                 condition = "user_id =%s and group_id=%s" % (user_id, group_id)
                 is_exist_sql = self.create_select_sql(db_name, table_name, "*", condition)
                 res = self.execute_fetch_one(db_conn, is_exist_sql)
@@ -272,7 +282,7 @@ class DBGroupMgr(DbBase):
         try:
             db_name = configuration.get_database_name()
             table_name = 'user_user_group'
-            for user_id in eval(user_ids):
+            for user_id in _ids(user_ids):
                 condition = "user_id =%s and group_id=%s" % (user_id, group_id)
                 is_exist_sql = self.create_select_sql(db_name, table_name, "*", condition)
                 res = self.execute_fetch_one(db_conn, is_exist_sql)
@@ -368,7 +378,7 @@ class DBGroupMgr(DbBase):
         try:
             db_name = configuration.get_database_name()
             table_name = 'user_group_role'
-            for role_id in eval(role_ids):
+            for role_id in _ids(role_ids):
                 condition = "role_id =%s and group_id=%s" % (role_id, group_id)
                 is_exist_sql = self.create_select_sql(db_name, table_name, "*", condition)
                 res = self.execute_fetch_one(db_conn, is_exist_sql)
@@ -396,7 +406,7 @@ class DBGroupMgr(DbBase):
         try:
             db_name = configuration.get_database_name()
             table_name = 'user_group_role'
-            for role_id in eval(role_ids):
+            for role_id in _ids(role_ids):
                 condition = "role_id =%s and group_id=%s" % (role_id, group_id)
                 is_exist_sql = self.create_select_sql(db_name, table_name, "*", condition)
                 res = self.execute_fetch_one(db_conn, is_exist_sql)
